@@ -10,6 +10,7 @@ Guía de contexto para agentes de programación (Codex, Gemini, Claude, Cursor).
   - `*.service.js` + `*.calculator.js` (reglas de negocio, transacciones ACID y `decimal.js`).
   - `*.repository.js` (acceso a datos Sequelize / SQL parametrizado).
 - **Punto de entrada:** `src/app.js` (exporta `createApp()` sin `listen`) y `src/server.js` (levanta HTTP + Graceful Shutdown).
+- **Contexto de negocio:** Para glosario financiero, invariantes contables y reglas de dominio, leer `docs/domain.md` y `docs/specs/<feature>/spec.md` antes de modificar lógica de negocio.
 
 ## Reglas Innegociables
 1. **Validación:** Todo `params`, `query`, `body` y `headers` debe validarse con Zod (`src/middlewares/validate.js`) respetando los límites de PostgreSQL (`PG_INT_MAX = 2147483647`, `price <= 99999999.99`, `MAX_ORDER_TOTAL = 9999999999999`).
