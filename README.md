@@ -206,3 +206,4 @@ Importar [cocos-challenge.postman_collection.json](docs/postman/cocos-challenge.
 El repositorio incluye un archivo de contexto multi-harness en la raíz:
 - [AGENTS.md](AGENTS.md): estándar leído por Codex, Gemini CLI/Antigravity, Cursor y otros harnesses con arquitectura, reglas de negocio/seguridad y comandos de verificación.
 - [CLAUDE.md](CLAUDE.md): referencia directa (`@AGENTS.md`) para Claude Code manteniendo una única fuente de verdad sin duplicar instrucciones.
+- [docs/domain.md](docs/domain.md): glosario financiero, reglas de negocio e invariantes contables del dominio (cargado bajo demanda desde `AGENTS.md`).
