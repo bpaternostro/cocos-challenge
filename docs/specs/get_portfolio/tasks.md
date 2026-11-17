@@ -10,7 +10,7 @@
   - **Cubre:** `RF-05`, `RF-06`, `RF-07`, `RF-08`.
   - **Hecho cuando:** Los tests unitarios de `portfolio.calculator.test.js` pasan al 100%.
 
-- [ ] **T3: Endpoint `GET /api/portfolio/:userId` (repository, service, controller, routes, schema) y tests funcionales**
+- [x] **T3: Endpoint `GET /api/portfolio/:userId` (repository, service, controller, routes, schema) y tests funcionales**
   - **Descripción:** Implementar `portfolio.schema.js`, `portfolio.repository.js` (consulta sin N+1 con último `marketdata.close`), `portfolio.service.js`, `portfolio.controller.js`, `portfolio.routes.js` y montar en `src/app.js`. Escribir tests funcionales en `src/modules/portfolio/__tests__/portfolio.functional.test.js`.
   - **Cubre:** `RF-01`, `RF-02`, `RF-03`, `RF-04`, `RF-07`.
   - **Hecho cuando:** Todos los tests unitarios y funcionales de `portfolio` pasan.

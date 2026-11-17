@@ -9,8 +9,8 @@ Permitir a un usuario enviar órdenes de compra (`BUY`), venta (`SELL`) y transf
 - **Como** usuario del exchange, **quiero** cancelar una orden `LIMIT` pendiente (`NEW`), **para** liberar el saldo o las acciones reservadas.
 
 ## 3. Requisitos Funcionales (EARS)
-- **RF-01 (Validación de entrada):** **Cuando** se envíe una solicitud de creación de orden, el sistema deberá validar que `userId`, `instrumentId`, `side`, `type` y exactamente uno entre `size` (entero positivo) o `amount` (monto en ARS positivo) sean válidos.
-- **RF-02 (Idempotencia):** **Cuando** se envíe una solicitud de creación de orden con una clave de idempotencia (`Idempotency-Key` UUID v4) ya procesada previamente para el mismo usuario, el sistema deberá devolver la orden original sin crear una nueva ni alterar posiciones.
+- **RF-01 (Validación de entrada):** **Cuando** se envíe una solicitud de creación de orden, el sistema deberá validar estrictamente (sin coerción booleana en JSON body y respetando límites de PostgreSQL) que `userId`, `instrumentId`, `side`, `type` y exactamente uno entre `size` (entero positivo) o `amount` (monto en ARS positivo) sean válidos.
+- **RF-02 (Idempotencia):** **Cuando** se envíe una solicitud de creación de orden con una clave de idempotencia (`Idempotency-Key` UUID v4) ya procesada previamente para el mismo usuario, el sistema deberá devolver la orden original (`200 OK`) sin crear una nueva ni alterar posiciones; **si** el payload difiere del original, **entonces** deberá devolver `422`.
 - **RF-03 (Cálculo por monto en pesos):** **Cuando** el usuario envíe `amount` en lugar de `size` para una orden `BUY` o `SELL`, el sistema deberá calcular `size = floor(amount / precioAplicable)`; **si** `size < 1`, **entonces** deberá rechazar la solicitud con error `400`.
 - **RF-04 (Precio en órdenes MARKET y LIMIT):**
   - **Cuando** `type = MARKET` (`BUY` o `SELL`), el sistema deberá ignorar cualquier precio enviado (o prohibirlo) y utilizar el último precio `close` del instrumento en los datos de mercado.
@@ -21,6 +21,8 @@ Permitir a un usuario enviar órdenes de compra (`BUY`), venta (`SELL`) y transf
 - **RF-08 (Transferencias `CASH_IN` y `CASH_OUT`):** **Cuando** `side` sea `CASH_IN` o `CASH_OUT` sobre el instrumento de tipo `'MONEDA'` (ARS), el sistema deberá procesarla como orden `MARKET` (`price = 1`), pasándola a `FILLED` si es válida (o `REJECTED` en `CASH_OUT` si excede el efectivo disponible) y actualizando el saldo en ARS.
 - **RF-09 (Concurrencia / Doble gasto):** **Mientras** se procesa una orden para un usuario, el sistema deberá serializar las operaciones de dicho usuario de forma transaccional para impedir que solicitudes concurrentes gasten el mismo saldo o las mismas acciones dos veces.
 - **RF-10 (Cancelación de órdenes `NEW`):** **Cuando** se solicite cancelar una orden existente en estado `NEW`, el sistema deberá cambiar su estado a `CANCELLED` y liberar la reserva de pesos o acciones correspondiente de forma atómica; **si** la orden no está en estado `NEW`, **entonces** deberá devolver error `409 Conflict`.
+- **RF-11 (Gestión de estados de órdenes `NEW`):** **Cuando** se solicite transicionar una orden abierta (`NEW`) hacia `FILLED`, `CANCELLED` o `REJECTED`, el sistema deberá validar el estado actual (`409` si no es `NEW`) y liquidar posiciones (en `FILLED`) o liberar reservas (en `CANCELLED`/`REJECTED`) atómicamente.
+- **RF-12 (Listado paginado de órdenes):** **Cuando** se consulten las órdenes de un usuario existente, el sistema deberá devolver el historial paginado ordenado cronológicamente con filtros opcionales por `status` y `side` (`404` si el usuario no existe).
 
 ## 4. Casos Límite y Fuera de Alcance (Out of Scope)
 - **Casos límite:**

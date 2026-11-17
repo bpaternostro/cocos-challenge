@@ -5,9 +5,11 @@
   - `order.model.js` (mapeo a `orders` incluyendo nueva columna `idempotencykey`), `position.model.js`.
 - `src/modules/orders/`
   - `orders.routes.js`:
+    - `GET /api/orders`
     - `POST /api/orders`
     - `PATCH /api/orders/:orderId/cancel`
-  - `orders.schema.js`: validación Zod para headers (`Idempotency-Key` UUID v4 opcional o requerido — recomendable requerido/soportado en header), body de `POST /orders` (XOR estricto entre `size` y `amount`, reglas `MARKET` vs `LIMIT`, `CASH_IN`/`CASH_OUT`) y `params.orderId`.
+    - `PATCH /api/orders/:orderId/status`
+  - `orders.schema.js`: validación Zod para headers (`Idempotency-Key` UUID v4 opcional), body de `POST /orders` (sin coerción en `userId`/`instrumentId`, límites `PG_INT_MAX = 2147483647`, `price <= 99999999.99`, `MAX_ORDER_TOTAL = 9999999999999`, XOR estricto entre `size` y `amount`), `PATCH /status`, `PATCH /cancel` y `GET /orders`.
   - `orders.controller.js`: `asyncHandler`, extrae payload + `idempotencyKey`, delega al servicio y devuelve `201` (nueva orden) o `200` (idempotente repetida / cancelación).
   - `orders.service.js`: ejecuta toda la lógica dentro de `sequelize.transaction` con lock pesimista, cálculos en `decimal.js`, actualización atómica de `orders` y `positions`.
   - `orders.repository.js`: operaciones transaccionales sobre `users` (`LOCK.UPDATE`), `instruments`, `marketdata`, `orders` y `positions`.
@@ -17,7 +19,7 @@
 
 ## 2. Modelo de Datos y Esquema
 - **Alteración sobre `orders` (`sample-db.sql`):**
-  - Agregar columna `idempotencykey VARCHAR(36) NULL`.
+  - Agregar columnas `idempotencykey VARCHAR(36) NULL` e `idempotencyhash VARCHAR(64) NULL`.
   - Índice único parcial: `CREATE UNIQUE INDEX uq_orders_user_idempotency ON orders(userid, idempotencykey) WHERE idempotencykey IS NOT NULL;`
   - Índice de consulta: `CREATE INDEX idx_orders_user_status ON orders(userid, status);`
 - **Tabla `positions`:**

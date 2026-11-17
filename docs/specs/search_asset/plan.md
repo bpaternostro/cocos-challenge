@@ -20,16 +20,20 @@
 
 ## 3. Decisiones Técnicas y Flujo Algorítmico
 1. Validar query params con Zod (`RF-05`):
-   - `query`: string opcional trimmeado.
-   - `type`: string opcional (`ACCIONES`, `MONEDA`, etc.).
+   - `query`: string opcional trimmeado (1..100 chars).
+   - `queries`: lista separada por coma opcional (1..20 ítems, máx. 100 chars c/u).
+   - `tickers`: lista separada por coma opcional (1..50 ítems, máx. 20 chars c/u).
+   - `type`: string opcional (`ACCIONES`, `MONEDA`, etc., máx. 10 chars).
    - `limit`: entero `1..100` (default `20`).
-   - `offset`: entero `>= 0` (default `0`).
-2. Construcción de filtros en repositorio:
+   - `offset`: entero `0..2147483647` (default `0`).
+2. Construcción de filtros en repositorio (escapando `%`, `_`, `\` con `escapeLikePattern` para `ILIKE`):
    - Si `query` está presente: `(ticker ILIKE '%query%' OR name ILIKE '%query%')` (`RF-01`).
-   - Si `type` está presente: `type = :type` (`RF-02`).
+   - Si `queries` está presente: `(ticker ILIKE ANY(ARRAY[:queryPatterns]) OR name ILIKE ANY(ARRAY[:queryPatterns]))` (`RF-01`).
+   - Si `tickers` está presente: `UPPER(ticker) = ANY(ARRAY[:upperTickers])` (`RF-01`).
+   - Si `type` está presente: `UPPER(type) = UPPER(:type)` (`RF-02`).
    - Si `type` NO está presente: `type <> 'MONEDA'` (`RF-03`).
 3. Ordenar por `ticker ASC`, aplicar `LIMIT` y `OFFSET` (`RF-04`, `RF-05`).
-4. Enriquecer cada instrumento con su último `marketdata` (`close`, `previousclose`):
+4. Enriquecer cada instrumento con `currency: BASE_CURRENCY` (`'ARS'`) y su último `marketdata` (`close`, `previousclose`):
    - Si existe `close` y `previousclose > 0`: `dailyReturnPct = Decimal(close).minus(previousclose).div(previousclose).times(100).toFixed(2)` (`RF-06`).
    - Si no existe `marketdata`: `close: null`, `dailyReturnPct: null`.
 5. Devolver `{ data: [...], pagination: { total, limit, offset } }`.

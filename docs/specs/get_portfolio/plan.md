@@ -24,18 +24,18 @@
   - Índice en `marketdata(instrumentid, date DESC)` para obtener el último `close` en O(1) con `DISTINCT ON (instrumentid)` o lateral join.
 
 ## 3. Decisiones Técnicas y Flujo Algorítmico
-1. Validar `userId` con Zod (`400` si no es entero positivo).
+1. Validar `userId` con Zod (`400` si no es entero positivo o supera `PG_INT_MAX = 2147483647`).
 2. Verificar existencia de `user` en `users`; si no existe, lanzar `AppError(404, 'User not found')` (`RF-02`).
 3. Obtener en una sola consulta las filas de `positions` del usuario junto con `instruments` y el último `marketdata.close` (por `date DESC, id DESC`).
-4. Separar la posición cuyo `instrument.type === 'MONEDA'` (ARS):
+4. Separar la posición cuyo `instrument.type === INSTRUMENT_TYPES.CURRENCY` (`'MONEDA'`):
    - `totalCash = Decimal(pos.qty)` (0 si no tiene fila aún).
    - `reservedCash = Decimal(pos.reservedqty)`.
    - `availableCash = totalCash.minus(reservedCash)`.
-5. Para el resto de instrumentos con `qty > 0` (`RF-03`, `RF-04`):
+5. Para el resto de instrumentos con `qty > 0` (`RF-03`, `RF-04`), incluir `currency: BASE_CURRENCY` (`'ARS'` de `src/config/constants.js`):
    - `currentPrice = marketClose ? Decimal(marketClose) : Decimal(pos.avgcost)` (`RF-08`).
    - `marketValue = Decimal(pos.qty).times(currentPrice)`.
    - `totalReturnPct = Decimal(pos.avgcost).gt(0) ? currentPrice.minus(pos.avgcost).div(pos.avgcost).times(100) : Decimal(0)` (`RF-05`).
-6. `totalAccountValue = totalCash.plus(sum(marketValue))` (`RF-06`).
+6. `totalAccountValue = totalCash.plus(sum(marketValue))` (`RF-06`) y devolver `currency: BASE_CURRENCY` en el resumen.
 7. Formatear montos a 2 decimales (`toFixed(2)`) como números/strings consistentes en JSON.
 
 ## 4. Estrategia de Testing
