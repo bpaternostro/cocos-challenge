@@ -198,3 +198,11 @@ Por simplicidad y foco en los requisitos del challenge, los siguientes component
 ## Colección de Postman
 
 Importar [cocos-challenge.postman_collection.json](docs/postman/cocos-challenge.postman_collection.json) en Postman. Incluye variables de colección y scripts `pm.test(...)` para validar cada endpoint de punta a punta.
+
+---
+
+## Contexto para Agentes de IA
+
+El repositorio incluye un archivo de contexto multi-harness en la raíz:
+- [AGENTS.md](AGENTS.md): estándar leído por Codex, Gemini CLI/Antigravity, Cursor y otros harnesses con arquitectura, reglas de negocio/seguridad y comandos de verificación.
+- [CLAUDE.md](CLAUDE.md): referencia directa (`@AGENTS.md`) para Claude Code manteniendo una única fuente de verdad sin duplicar instrucciones.
