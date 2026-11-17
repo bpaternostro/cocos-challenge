@@ -1,0 +1,32 @@
+services:
+  api:
+    build: .
+    ports:
+      - "${PORT:-3000}:3000"
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    profiles:
+      - local-db
+    environment:
+      POSTGRES_USER: cocos
+      POSTGRES_PASSWORD: cocos_dev_password
+      POSTGRES_DB: cocos_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./docs/sample-db.sql:/docker-entrypoint-initdb.d/01-sample-db.sql:ro
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cocos -d cocos_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pg_data:

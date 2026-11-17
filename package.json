@@ -1,0 +1,41 @@
+{
+  "name": "cocos-challenge-backend",
+  "version": "1.0.0",
+  "description": "API REST para gestión de portafolio, búsqueda de activos y envío de órdenes de mercado",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest --runInBand",
+    "test:unit": "NODE_OPTIONS=--experimental-vm-modules jest --testPathPattern='calculator\\.test\\.js$'",
+    "test:functional": "NODE_OPTIONS=--experimental-vm-modules jest --runInBand --testPathPattern='functional\\.test\\.js$'",
+    "lint": "eslint src/",
+    "db:migrate": "node src/db/migrate.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "decimal.js": "^10.4.3",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "express-rate-limit": "^7.4.1",
+    "helmet": "^8.0.0",
+    "pg": "^8.13.1",
+    "pg-hstore": "^2.3.4",
+    "pino": "^9.5.0",
+    "pino-http": "^10.3.0",
+    "sequelize": "^6.37.5",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "eslint": "^9.39.5",
+    "globals": "^17.14.0",
+    "jest": "^29.7.0",
+    "supertest": "^7.0.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "transform": {}
+  }
+}

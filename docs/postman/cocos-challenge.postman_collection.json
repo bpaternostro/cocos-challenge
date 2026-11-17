@@ -1,0 +1,1558 @@
+{
+  "info": {
+    "name": "Cocos Challenge Backend API",
+    "_postman_id": "a7f3c8d1-5e2b-4c9a-9f11-1234567890ab",
+    "description": "Colección funcional para validar los endpoints de Health, Portfolio, Búsqueda de Activos y Órdenes.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "userId",
+      "value": "1"
+    },
+    {
+      "key": "arsInstrumentId",
+      "value": "66"
+    },
+    {
+      "key": "assetInstrumentId",
+      "value": "47"
+    },
+    {
+      "key": "limitOrderId",
+      "value": ""
+    },
+    {
+      "key": "idempotencyKey",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - Health",
+      "item": [
+        {
+          "name": "Healthcheck",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200 and DB connected', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.status).to.eql('ok');",
+                  "  pm.expect(body.db).to.eql('connected');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 - Assets (GET /api/assets)",
+      "item": [
+        {
+          "name": "Search Assets (Default)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/assets?limit=10&offset=0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "assets"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Returns paginated assets excluding MONEDA', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.data).to.be.an('array');",
+                  "  pm.expect(body.pagination).to.have.keys(['total', 'limit', 'offset']);",
+                  "  body.data.forEach(item => pm.expect(item.type).to.not.eql('MONEDA'));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Search Assets by Query (PAMP)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/assets?query=PAMP",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "assets"
+              ],
+              "query": [
+                {
+                  "key": "query",
+                  "value": "PAMP"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Finds PAMP asset with close price', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.data.length).to.be.above(0);",
+                  "  pm.expect(body.data[0].ticker).to.eql('PAMP');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Search Assets by Partial Name (galicia)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/assets?query=galicia",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "assets"
+              ],
+              "query": [
+                {
+                  "key": "query",
+                  "value": "galicia"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Finds Galicia by partial name case-insensitive', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.data.some(a => a.ticker === 'GGAL')).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Search Assets by Multiple Queries (galicia,ypf)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/assets?queries=galicia,ypf",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "assets"
+              ],
+              "query": [
+                {
+                  "key": "queries",
+                  "value": "galicia,ypf"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Finds both GGAL and YPFD using multi-term queries', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  const tickers = body.data.map(a => a.ticker);",
+                  "  pm.expect(tickers).to.include('GGAL');",
+                  "  pm.expect(tickers).to.include('YPFD');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Search Assets by Exact Tickers (GGAL,YPFD)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/assets?tickers=GGAL,YPFD",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "assets"
+              ],
+              "query": [
+                {
+                  "key": "tickers",
+                  "value": "GGAL,YPFD"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Finds exact tickers GGAL and YPFD', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.data.map(a => a.ticker)).to.eql(['GGAL', 'YPFD']);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Search Assets by Type (ACCIONES)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/assets?type=ACCIONES&limit=5&offset=0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "assets"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "ACCIONES"
+                },
+                {
+                  "key": "limit",
+                  "value": "5"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Filters strictly by type ACCIONES', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.data.length).to.be.above(0);",
+                  "  body.data.forEach(item => pm.expect(item.type).to.eql('ACCIONES'));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Search Assets by Type (MONEDA)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/assets?type=MONEDA",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "assets"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "MONEDA"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Returns MONEDA instruments when explicitly requested', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.data.length).to.be.above(0);",
+                  "  pm.expect(body.data[0].type).to.eql('MONEDA');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Search Assets Combined (query + type + pagination)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/assets?query=banco&type=ACCIONES&limit=5&offset=0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "assets"
+              ],
+              "query": [
+                {
+                  "key": "query",
+                  "value": "banco"
+                },
+                {
+                  "key": "type",
+                  "value": "ACCIONES"
+                },
+                {
+                  "key": "limit",
+                  "value": "5"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Combines query, type and pagination', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.data.length).to.be.above(0);",
+                  "  body.data.forEach(item => pm.expect(item.type).to.eql('ACCIONES'));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Search Assets - No Results",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/assets?query=NOEXISTE123",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "assets"
+              ],
+              "query": [
+                {
+                  "key": "query",
+                  "value": "NOEXISTE123"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Returns empty array and total 0 when no match', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.data).to.be.an('array').that.is.empty;",
+                  "  pm.expect(body.pagination.total).to.eql(0);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Security - SQLi Attempt in Search Query",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/assets?query=%27%20OR%20%271%27%3D%271%27%20--",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "assets"
+              ],
+              "query": [
+                {
+                  "key": "query",
+                  "value": "' OR '1'='1' --"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Blocks SQLi payload and returns empty result safely', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.data).to.be.an('array').that.is.empty;",
+                  "  pm.expect(body.pagination.total).to.eql(0);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Security - SQLi Attempt in Tickers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/assets?tickers=GGAL%27%3B%20DROP%20TABLE%20orders%3B%20--",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "assets"
+              ],
+              "query": [
+                {
+                  "key": "tickers",
+                  "value": "GGAL'; DROP TABLE orders; --"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Blocks or safely neutralizes SQLi in tickers without executing SQL', function () {",
+                  "  pm.expect([200, 400]).to.include(pm.response.code);",
+                  "  if (pm.response.code === 200) {",
+                  "    pm.expect(pm.response.json().data).to.be.an('array').that.is.empty;",
+                  "  }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Security - Wildcard Injection (% in Search)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/assets?query=%25",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "assets"
+              ],
+              "query": [
+                {
+                  "key": "query",
+                  "value": "%"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Escapes LIKE wildcard % so it does not dump all assets', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.data).to.be.an('array').that.is.empty;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Security - Excessive Pagination Limit (400)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/assets?limit=999999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "assets"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "999999"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Rejects excessive limit with 400 Validation error', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.error.message).to.eql('Validation error');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 - Portfolio (GET /api/portfolio/:userId)",
+      "item": [
+        {
+          "name": "Get Portfolio",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/portfolio/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "portfolio",
+                "{{userId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Returns portfolio summary structure', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.include.keys(['userId', 'totalAccountValue', 'totalCash', 'availableCash', 'reservedCash', 'assets']);",
+                  "  pm.expect(body.assets).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 - Orders (POST /api/orders & PATCH /cancel)",
+      "item": [
+        {
+          "name": "List User Orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders?userId={{userId}}&limit=20&offset=0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "{{userId}}"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Returns paginated user orders', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.data).to.be.an('array');",
+                  "  pm.expect(body.pagination).to.have.keys(['total', 'limit', 'offset']);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List User Orders (Filter by status=FILLED)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders?userId={{userId}}&status=FILLED",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "{{userId}}"
+                },
+                {
+                  "key": "status",
+                  "value": "FILLED"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Returns only FILLED orders', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  body.data.forEach(o => pm.expect(o.status).to.eql('FILLED'));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Order - CASH_IN (Idempotent)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('idempotencyKey', pm.variables.replaceIn('{{$guid}}'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Creates CASH_IN order as FILLED', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.status).to.eql('FILLED');",
+                  "  pm.expect(body.side).to.eql('CASH_IN');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{idempotencyKey}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"instrumentId\": {{arsInstrumentId}},\n  \"side\": \"CASH_IN\",\n  \"type\": \"MARKET\",\n  \"size\": 50000\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Order - CASH_IN (Idempotency Retry -> 200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Returns 200 OK without duplicating order on retry', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.status).to.eql('FILLED');",
+                  "  pm.expect(body.side).to.eql('CASH_IN');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{idempotencyKey}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"instrumentId\": {{arsInstrumentId}},\n  \"side\": \"CASH_IN\",\n  \"type\": \"MARKET\",\n  \"size\": 50000\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Order - MARKET BUY (by amount)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"instrumentId\": {{assetInstrumentId}},\n  \"side\": \"BUY\",\n  \"type\": \"MARKET\",\n  \"amount\": 5000\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Executes MARKET BUY order as FILLED', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.status).to.eql('FILLED');",
+                  "  pm.expect(body.size).to.be.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Order - MARKET BUY (by size)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"instrumentId\": {{assetInstrumentId}},\n  \"side\": \"BUY\",\n  \"type\": \"MARKET\",\n  \"size\": 2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Executes MARKET BUY by exact size as FILLED', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.status).to.eql('FILLED');",
+                  "  pm.expect(body.size).to.eql(2);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Order - MARKET SELL (by size)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"instrumentId\": {{assetInstrumentId}},\n  \"side\": \"SELL\",\n  \"type\": \"MARKET\",\n  \"size\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Executes MARKET SELL by exact size as FILLED', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.status).to.eql('FILLED');",
+                  "  pm.expect(body.side).to.eql('SELL');",
+                  "  pm.expect(body.size).to.eql(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Order - LIMIT BUY (NEW)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"instrumentId\": {{assetInstrumentId}},\n  \"side\": \"BUY\",\n  \"type\": \"LIMIT\",\n  \"size\": 2,\n  \"price\": 800\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Creates LIMIT BUY order as NEW and saves orderId', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.status).to.eql('NEW');",
+                  "  pm.collectionVariables.set('limitOrderId', body.id);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cancel LIMIT Order",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/{{limitOrderId}}/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "{{limitOrderId}}",
+                "cancel"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Cancels NEW order and sets status CANCELLED', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.status).to.eql('CANCELLED');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Order - LIMIT SELL (NEW)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"instrumentId\": {{assetInstrumentId}},\n  \"side\": \"SELL\",\n  \"type\": \"LIMIT\",\n  \"size\": 1,\n  \"price\": 1500\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Creates LIMIT SELL order as NEW and saves limitOrderId', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.status).to.eql('NEW');",
+                  "  pm.expect(body.side).to.eql('SELL');",
+                  "  pm.collectionVariables.set('limitOrderId', body.id);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cancel LIMIT SELL Order",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/{{limitOrderId}}/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "{{limitOrderId}}",
+                "cancel"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Cancels LIMIT SELL order and releases reserved shares', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.status).to.eql('CANCELLED');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Order - REJECTED (Insufficient Funds)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"instrumentId\": {{assetInstrumentId}},\n  \"side\": \"BUY\",\n  \"type\": \"MARKET\",\n  \"size\": 9999999\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Saves order as REJECTED when funds are insufficient', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.status).to.eql('REJECTED');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Edge - Order 400 (Both size and amount)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"instrumentId\": {{assetInstrumentId}},\n  \"side\": \"BUY\",\n  \"type\": \"MARKET\",\n  \"size\": 1,\n  \"amount\": 1000\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Returns 400 when both size and amount are sent', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().error.message).to.eql('Validation error');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Edge - Order 400 (Neither size nor amount)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"instrumentId\": {{assetInstrumentId}},\n  \"side\": \"BUY\",\n  \"type\": \"MARKET\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Returns 400 when neither size nor amount is sent', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().error.message).to.eql('Validation error');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Edge - Order 400 (LIMIT without price)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"instrumentId\": {{assetInstrumentId}},\n  \"side\": \"BUY\",\n  \"type\": \"LIMIT\",\n  \"size\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Returns 400 when LIMIT order omits price', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().error.message).to.eql('Validation error');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Edge - Order 400 (MARKET with price)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"instrumentId\": {{assetInstrumentId}},\n  \"side\": \"BUY\",\n  \"type\": \"MARKET\",\n  \"size\": 1,\n  \"price\": 500\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Returns 400 when MARKET order includes price', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().error.message).to.eql('Validation error');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Edge - Order 400 (Amount insufficient for 1 unit)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"instrumentId\": {{assetInstrumentId}},\n  \"side\": \"BUY\",\n  \"type\": \"MARKET\",\n  \"amount\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Returns 400 when amount cannot buy at least 1 unit', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Edge - Order 400 (Invalid Idempotency-Key UUID)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "not-a-valid-uuid"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"instrumentId\": {{assetInstrumentId}},\n  \"side\": \"BUY\",\n  \"type\": \"MARKET\",\n  \"size\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Returns 400 when Idempotency-Key is not a valid UUID', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().error.message).to.eql('Validation error');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Order - LIMIT BUY for Status Fill (NEW)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": 1,\n  \"instrumentId\": 47,\n  \"side\": \"BUY\",\n  \"type\": \"LIMIT\",\n  \"size\": 1,\n  \"price\": 800\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Creates LIMIT BUY as NEW for status transition', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.status).to.eql('NEW');",
+                  "  pm.collectionVariables.set('limitOrderId', body.id);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Order Status - LIMIT BUY to FILLED",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"FILLED\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/{{limitOrderId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "{{limitOrderId}}",
+                "status"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Transitions NEW order to FILLED', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().status).to.eql('FILLED');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Edge - Update Order Status 409 (Already FILLED)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"CANCELLED\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/{{limitOrderId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "{{limitOrderId}}",
+                "status"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Returns 409 Conflict when transitioning non-NEW order', function () {",
+                  "  pm.response.to.have.status(409);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

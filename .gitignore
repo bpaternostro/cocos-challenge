@@ -147,3 +147,16 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+nodejs_references.md
+challenge.md
+docs/context.md
+
+.agents/
+.claude/
+
+sample-db.sql
+docs/review/justificaciones.md
+.env.example
+docs/checklist.md
+docs/constitution.md
+docs/review/fuera-de-challenge.md
